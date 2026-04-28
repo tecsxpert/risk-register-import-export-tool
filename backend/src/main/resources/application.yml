@@ -58,3 +58,7 @@ app:
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
     issuer: ${JWT_ISSUER:risk-register-import-export-tool-backend}
+  notifications:
+    from-email: ${NOTIFICATION_FROM_EMAIL:${MAIL_USERNAME:no-reply@example.com}}
+    reminder-cron: ${NOTIFICATION_REMINDER_CRON:0 0 9 * * *}
+    reminder-window-days: ${NOTIFICATION_REMINDER_WINDOW_DAYS:3}

@@ -17,9 +17,17 @@ spring:
       repositories:
         enabled: false
 
+  mail:
+    host: localhost
+    port: 2525
+
 app:
   jwt:
     secret: test-jwt-secret-key-with-at-least-thirty-two-characters
     expiration-ms: 86400000
     refresh-expiration-ms: 604800000
     issuer: risk-register-import-export-tool-test
+  notifications:
+    from-email: no-reply@example.com
+    reminder-cron: 0 0 9 * * *
+    reminder-window-days: 3

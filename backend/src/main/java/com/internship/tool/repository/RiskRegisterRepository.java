@@ -20,6 +20,10 @@ public interface RiskRegisterRepository extends JpaRepository<RiskRegister, Long
 
     List<RiskRegister> findByTargetResolutionDateBeforeAndActiveTrue(LocalDate targetResolutionDate);
 
+    List<RiskRegister> findByTargetResolutionDateBetweenAndActiveTrue(LocalDate startDate, LocalDate endDate);
+
+    List<RiskRegister> findByTargetResolutionDateAndActiveTrue(LocalDate targetResolutionDate);
+
     @Query("""
         select r
         from RiskRegister r
