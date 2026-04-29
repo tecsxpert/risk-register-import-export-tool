@@ -1,8 +1,0 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/riskdb
-    username: postgres
-    password: postgres
-
-  flyway:
-    enabled: true
