@@ -73,6 +73,7 @@ class AuthServiceImplTests {
         UserDetails userDetails = createUserDetails();
 
         when(userAccountRepository.existsByEmailIgnoreCase("anagha@example.com")).thenReturn(false);
+        when(userAccountRepository.count()).thenReturn(1L);
         when(passwordEncoder.encode("SecurePass123")).thenReturn("encoded-password");
         when(userAccountRepository.save(any(UserAccount.class))).thenReturn(savedUser);
         when(userDetailsService.loadUserByUsername("anagha@example.com")).thenReturn(userDetails);
@@ -87,6 +88,30 @@ class AuthServiceImplTests {
         assertThat(captor.getValue().getPasswordHash()).isEqualTo("encoded-password");
         assertThat(response.getEmail()).isEqualTo("anagha@example.com");
         assertThat(response.getAccessToken()).isEqualTo("access-token");
+    }
+
+    @Test
+    void shouldAssignAdminRoleToFirstRegisteredUser() {
+        AuthRegisterRequest request = createRegisterRequest();
+        UserAccount savedUser = createUserAccount();
+        savedUser.setRole("ROLE_ADMIN");
+        UserDetails userDetails = createUserDetails();
+
+        when(userAccountRepository.existsByEmailIgnoreCase("anagha@example.com")).thenReturn(false);
+        when(userAccountRepository.count()).thenReturn(0L);
+        when(passwordEncoder.encode("SecurePass123")).thenReturn("encoded-password");
+        when(userAccountRepository.save(any(UserAccount.class))).thenReturn(savedUser);
+        when(userDetailsService.loadUserByUsername("anagha@example.com")).thenReturn(userDetails);
+        when(jwtUtil.generateAccessToken(userDetails)).thenReturn("access-token");
+        when(jwtUtil.generateRefreshToken(userDetails)).thenReturn("refresh-token");
+        when(jwtUtil.getAccessTokenExpirationMs()).thenReturn(86400000L);
+
+        AuthResponse response = authService.register(request);
+
+        ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+        verify(userAccountRepository).save(captor.capture());
+        assertThat(captor.getValue().getRole()).isEqualTo("ROLE_ADMIN");
+        assertThat(response.getRole()).isEqualTo("ROLE_ADMIN");
     }
 
     @Test

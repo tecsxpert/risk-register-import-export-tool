@@ -2,6 +2,7 @@ package com.internship.tool.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -95,7 +96,7 @@ public class JwtUtil {
         try {
             byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
             return Keys.hmacShaKeyFor(keyBytes);
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException | DecodingException exception) {
             return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         }
     }
