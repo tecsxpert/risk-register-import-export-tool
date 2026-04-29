@@ -1,8 +1,33 @@
 spring:
+  application:
+    name: risk-register-import-export-tool-backend
+
   datasource:
     url: jdbc:postgresql://localhost:5432/riskdb
     username: postgres
     password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
 
   flyway:
     enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
