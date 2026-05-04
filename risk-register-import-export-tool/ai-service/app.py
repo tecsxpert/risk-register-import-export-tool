@@ -1,47 +1,49 @@
 import logging
 from flask import Flask, jsonify
-from routes.risk_routes import risk_bp
+from routes import risk_bp # Import from the routes package initialized in __init__.py
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-# Configure logging for audit and error tracking 
-# Line 8 fix
+# --- Step 1: Logging Configuration ---
+# Essential for auditing AI calls and debugging during Demo Day
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Security: Rate limiting setup [cite: 18, 67]
-# Blocks IPs exceeding 30 requests per minute 
+# --- Step 2: Security Rate Limiting ---
+# Requirement: Prevent API abuse with a 30 req/min limit
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
     default_limits=["30 per minute"],
-    storage_uri="memory://"  # Uses in-memory storage for rate limiting 
+    storage_uri="memory://" 
 )
 
-# Registering the risk routes blueprint [cite: 35, 36]
+# --- Step 3: Blueprint Registration ---
+# Maps your /describe, /recommend, and /generate-report routes
 app.register_blueprint(risk_bp, url_prefix='/ai')
 
+# --- Step 4: Health Check Endpoint ---
+# Requirement: Allows Java backend to verify AI service status
 @app.route('/health', methods=['GET'])
 def health_check():
-    """
-    Standard health check endpoint for the Al microservice[cite: 14, 72].
-    Provides model info and service status for the Java backend to monitor.
-    """
-    logger.info("Health check endpoint accessed")
+    logger.info("Health check accessed by monitor")
     return jsonify({
         "status": "healthy",
-        "uptime": "active",
-        "model": "llama-3.3-70b-specdec", # Exact model specified in Groq docs [cite: 119]
-        "port": 5000 # Al Service Port 
+        "model": "llama-3.3-70b-specdec", # Final model choice for performance
+        "port": 5000
     }), 200
 
-# Error handler for rate limiting to prevent HTTP 500 
+# --- Step 5: Error Handling ---
+# Ensures a clean JSON error if a user hits the rate limit
 @app.errorhandler(429)
 def ratelimit_handler(e):
-    return jsonify({"error": "Rate limit exceeded", "details": str(e.description)}), 429
+    return jsonify({
+        "error": "Rate limit exceeded", 
+        "details": "Please wait a moment before trying again."
+    }), 429
 
 if __name__ == '__main__':
-    # Running on port 5000 as required by the Project Overview 
+    # host='0.0.0.0' is mandatory for Docker networking access
     app.run(host='0.0.0.0', port=5000, debug=False)
