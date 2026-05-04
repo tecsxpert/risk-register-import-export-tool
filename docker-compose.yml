@@ -1,40 +1,123 @@
-version: "3.9"
-
 services:
-  backend:
-    build:
-      context: ./backend
-    ports:
-      - "${SERVER_PORT:-8080}:8080"
-    env_file:
-      - .env
-
-  ai-service:
-    build:
-      context: ./ai-service
-    ports:
-      - "${AI_SERVICE_PORT:-5000}:5000"
-    env_file:
-      - .env
-
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "${FRONTEND_PORT:-5173}:5173"
-    env_file:
-      - .env
-
   postgres:
     image: postgres:15
+    container_name: risk-register-postgres
     environment:
       POSTGRES_DB: ${DB_NAME:-risk_register_import_export_tool_db}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
       - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-risk_register_import_export_tool_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   redis:
     image: redis:7.4-alpine
+    container_name: risk-register-redis
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: risk-register-backend
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  ai-service:
+    image: python:3.11-slim
+    container_name: risk-register-ai-service
+    working_dir: /app
+    env_file:
+      - path: ./.env
+        required: false
+    volumes:
+      - ./ai-service:/app
+    command: >
+      sh -c "
+      if [ -f app.py ]; then
+        pip install --no-cache-dir -r requirements.txt &&
+        python app.py;
+      else
+        python -m http.server 5000;
+      fi"
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${AI_SERVICE_PORT:-5000}:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000', timeout=3)\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    image: node:20-alpine
+    container_name: risk-register-frontend
+    working_dir: /app
+    env_file:
+      - path: ./.env
+        required: false
+    volumes:
+      - ./frontend:/app
+    command: >
+      sh -c "
+      if [ -f package.json ]; then
+        npm install &&
+        npm run dev -- --host 0.0.0.0 --port 5173;
+      else
+        node -e \"require('http').createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/plain'});res.end('frontend placeholder');}).listen(5173,'0.0.0.0')\";
+      fi"
+    depends_on:
+      backend:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5173', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+
+volumes:
+  postgres_data:
+  redis_data:

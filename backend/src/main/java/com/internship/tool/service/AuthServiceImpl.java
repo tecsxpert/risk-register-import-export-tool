@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthServiceImpl implements AuthService {
 
     private static final String DEFAULT_ROLE = "ROLE_USER";
+    private static final String INITIAL_ADMIN_ROLE = "ROLE_ADMIN";
     private static final String BEARER = "Bearer";
 
     private final UserAccountRepository userAccountRepository;
@@ -65,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         user.setFullName(request.getFullName().trim());
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setRole(DEFAULT_ROLE);
+        user.setRole(resolveRoleForNewUser());
         user.setActive(Boolean.TRUE);
 
         UserAccount savedUser = userAccountRepository.save(user);
@@ -145,5 +146,9 @@ public class AuthServiceImpl implements AuthService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase();
+    }
+
+    private String resolveRoleForNewUser() {
+        return userAccountRepository.count() == 0 ? INITIAL_ADMIN_ROLE : DEFAULT_ROLE;
     }
 }

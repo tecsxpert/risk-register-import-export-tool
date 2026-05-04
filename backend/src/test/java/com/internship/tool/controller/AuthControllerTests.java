@@ -50,7 +50,9 @@ class AuthControllerTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRegisterRequest())))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.email").value("anagha@example.com"));
+            .andExpect(jsonPath("$.status").value(201))
+            .andExpect(jsonPath("$.message").value("User registered successfully"))
+            .andExpect(jsonPath("$.data.email").value("anagha@example.com"));
     }
 
     @Test
@@ -61,7 +63,9 @@ class AuthControllerTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createLoginRequest())))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accessToken").value("access-token"));
+            .andExpect(jsonPath("$.status").value(200))
+            .andExpect(jsonPath("$.message").value("User logged in successfully"))
+            .andExpect(jsonPath("$.data.accessToken").value("access-token"));
     }
 
     @Test
@@ -72,7 +76,9 @@ class AuthControllerTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRefreshRequest())))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
+            .andExpect(jsonPath("$.status").value(200))
+            .andExpect(jsonPath("$.message").value("Token refreshed successfully"))
+            .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"));
     }
 
     @Test

@@ -55,7 +55,22 @@ class RiskRegisterControllerTests {
 
         mockMvc.perform(get("/risk-registers/all?page=0&size=5"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].riskCode").value("RISK-201"));
+            .andExpect(jsonPath("$.status").value(200))
+            .andExpect(jsonPath("$.message").value("Risk registers fetched successfully"))
+            .andExpect(jsonPath("$.data.content[0].riskCode").value("RISK-201"));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void shouldReturnEmptyPageInsteadOfNullWhenNoRiskRegistersExist() throws Exception {
+        when(riskRegisterService.getAllRiskRegisters(any()))
+            .thenReturn(new PageImpl<>(List.of()));
+
+        mockMvc.perform(get("/risk-registers/all?page=0&size=5"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value(200))
+            .andExpect(jsonPath("$.data.content").isArray())
+            .andExpect(jsonPath("$.data.content").isEmpty());
     }
 
     @Test
@@ -65,8 +80,10 @@ class RiskRegisterControllerTests {
 
         mockMvc.perform(get("/risk-registers/1"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.title").value("File corruption"));
+            .andExpect(jsonPath("$.status").value(200))
+            .andExpect(jsonPath("$.message").value("Risk register fetched successfully"))
+            .andExpect(jsonPath("$.data.id").value(1))
+            .andExpect(jsonPath("$.data.title").value("File corruption"));
     }
 
     @Test
@@ -90,7 +107,9 @@ class RiskRegisterControllerTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.riskCode").value("RISK-201"));
+            .andExpect(jsonPath("$.status").value(201))
+            .andExpect(jsonPath("$.message").value("Risk register created successfully"))
+            .andExpect(jsonPath("$.data.riskCode").value("RISK-201"));
     }
 
     @Test

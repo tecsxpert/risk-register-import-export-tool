@@ -27,6 +27,8 @@ app:
     expiration-ms: 86400000
     refresh-expiration-ms: 604800000
     issuer: risk-register-import-export-tool-test
+  seed:
+    enabled: false
   notifications:
     from-email: no-reply@example.com
     reminder-cron: 0 0 9 * * *
