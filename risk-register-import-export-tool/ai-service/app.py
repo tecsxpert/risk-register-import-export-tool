@@ -1,6 +1,6 @@
 import logging
 from flask import Flask, jsonify
-from routes import risk_bp # Import from the routes package initialized in __init__.py
+from routes.risk_routes import risk_bp
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
