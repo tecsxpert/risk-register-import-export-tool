@@ -1,3 +1,4 @@
+import AiSkeleton from '../components/AiSkeleton';
 import React, { useState } from 'react';
 import { aiService } from '../services/aiService';
 import RecommendationList from '../components/RecommendationList';
@@ -86,12 +87,9 @@ const RiskForm = () => {
         </div>
 
         {loading.rec ? (
-          <div className="animate-pulse space-y-4">
-            <div className="h-20 bg-gray-200 rounded"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
-          </div>
+            <AiSkeleton type="cards" />
         ) : (
-          <RecommendationList recommendations={recommendations} />
+            <RecommendationList recommendations={recommendations} />
         )}
       </div>
 
